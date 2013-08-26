@@ -5,41 +5,39 @@ import (
     "errors"
 )
 
+var ControlCodes = map[string][]byte {
+    "ReadSize" :            []byte{0x52, 0x55},
+    "ReadOutput" :          []byte{0x52, 0x4f},
+    "ConnectSource" :       []byte{0x43, 0x53},
+    "ConnectAll" :          []byte{0x43, 0x41},
+    "ExamineConnections" :  []byte{0x53, 0x58},
+    "CloseConnection" :     []byte{0x58, 0x58},
+}
 
-type veemux struct {
+const EndCommand = byte(0x0d)
+
+
+
+type Veemux struct {
     IP string
     Port int
-    Commands map[string]string
     Debug bool
 }
 
-func NewVeemux(debug bool) *veemux {
-    return &veemux{Commands: map[string]string {
-        "unitSize" : "RU\r",
-        "outputConnection": "RO%v\r",
-        "connectPort": "CS%v\r",
-        },
-        Debug: debug}
-}
-
-func (v *veemux) SendCommand (cmd string, opts ...string) (err error) {
+func (v *Veemux) SendCommand (cmd string, opts []byte) (err error) {
     if v.IP == ""  || v.Port == 0 {
         return errors.New("No IP or Port")
     }
 
-    command, ok := v.Commands[cmd]
+    command, ok := ControlCodes[cmd]
     if !ok {
         return errors.New(fmt.Sprintf("%v is not an available command", cmd))
     }
 
-    opstring := ""
-    for _, v := range opts {
-        opstring = fmt.Sprintf("%v %v", opstring, v)
+    for o := range opts {
+        command = append(command, byte(o))
     }
-
-    if len(opts) > 0 {
-        command = fmt.Sprintf(command, opstring)
-    }
+    command = append(command, EndCommand)
 
     if v.Debug {
         fmt.Printf("%v\n", command)
