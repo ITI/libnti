@@ -34,7 +34,7 @@ func (v *Veemux) SendCommand (cmd string, opts []byte) (err error) {
         return errors.New(fmt.Sprintf("%v is not an available command", cmd))
     }
 
-    for o := range opts {
+    for _,o := range opts {
         command = append(command, byte(o))
     }
     command = append(command, EndCommand)
