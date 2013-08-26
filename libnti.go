@@ -3,6 +3,7 @@ package libnti
 import (
     "fmt"
     "errors"
+    "net"
 )
 
 var ControlCodes = map[string][]byte {
@@ -42,7 +43,18 @@ func (v *Veemux) SendCommand (cmd string, opts []byte) (err error) {
     if v.Debug {
         fmt.Printf("%v\n", command)
     } else {
-        // Shoot it over the wire
+        addr,err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%v:%v", v.IP, v.Port))
+        if err != nil {
+            return err
+        }
+        con,err := net.DialTCP("tcp", nil, addr)
+        if err != nil {
+            return err
+        }
+        _, err = con.Write(command)
+        if err != nil {
+            return err
+        }
     }
 
     return nil
